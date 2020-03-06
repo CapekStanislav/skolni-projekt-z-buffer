@@ -10,7 +10,7 @@ public class PGRFWindow extends JFrame {
     public PGRFWindow() {
         // bez tohoto nastavení se okno zavře, ale aplikace stále běží na pozadí
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setTitle("PGRF1 cvičení"); // titulek okna
+        setTitle("KPGR 1,2 - cvičení"); // titulek okna
 
         raster = new Raster();
         raster.setFocusable(true);

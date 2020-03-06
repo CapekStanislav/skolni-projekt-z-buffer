@@ -1,6 +1,5 @@
 package main;
 
-import controller.Controller;
 import controller.Controller3D;
 import view.PGRFWindow;
 

@@ -1,15 +1,9 @@
 package renderer;
 
-import model3d.Solid;
 import transforms.Mat4;
 import transforms.Mat4Identity;
-import transforms.Point3D;
 import transforms.Vec3D;
 import view.Raster;
-
-import java.awt.*;
-import java.util.List;
-import java.util.Optional;
 
 public class Renderer3D implements GPURenderer {
 
@@ -29,50 +23,8 @@ public class Renderer3D implements GPURenderer {
     }
 
     @Override
-    public void draw(Solid... solids) {
-        for (Solid solid : solids) {
-            List<Point3D> vertices = solid.getVertices();
-            List<Integer> indices = solid.getIndices();
-            for (int i = 0; i < indices.size(); i += 2) {
-                Point3D a = vertices.get(indices.get(i));
-                Point3D b = vertices.get(indices.get(i + 1));
-                transformLine(a, b, solid.getColor());
-            }
-        }
-    }
-
-    private void transformLine(Point3D a, Point3D b, Color color) {
-        a = a.mul(model).mul(view).mul(projection);
-        b = b.mul(model).mul(view).mul(projection);
-
-        if (clip(a)) return;
-        if (clip(b)) return;
-
-        Optional<Vec3D> dehomogA = a.dehomog();
-        Optional<Vec3D> dehomogB = b.dehomog();
-
-        if (!dehomogA.isPresent() || !dehomogB.isPresent()) return;
-
-        Vec3D v1 = dehomogA.get();
-        Vec3D v2 = dehomogB.get();
-
-        v1 = transformToWindow(v1);
-        v2 = transformToWindow(v2);
-
-        raster.drawLine(
-                (int) Math.round(v1.getX()),
-                (int) Math.round(v1.getY()),
-                (int) Math.round(v2.getX()),
-                (int) Math.round(v2.getY()),
-                color
-        );
-    }
-
-    private boolean clip(Point3D p) {
-        if (p.getW() < p.getX() || p.getX() < -p.getW()) return true;
-        if (p.getW() < p.getY() || p.getY() < -p.getW()) return true;
-        if (p.getW() < p.getZ() || p.getZ() < 0) return true;
-        return false;
+    public void draw() {
+        // TODO
     }
 
     private Vec3D transformToWindow(Vec3D vec) {
@@ -97,4 +49,5 @@ public class Renderer3D implements GPURenderer {
     public void setProjection(Mat4 projection) {
         this.projection = projection;
     }
+
 }

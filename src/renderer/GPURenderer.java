@@ -1,13 +1,12 @@
 package renderer;
 
-import model3d.Solid;
 import transforms.Mat4;
 
 public interface GPURenderer {
 
     void clear();
 
-    void draw(Solid... solids);
+    void draw();
 
     void setModel(Mat4 model);
 
