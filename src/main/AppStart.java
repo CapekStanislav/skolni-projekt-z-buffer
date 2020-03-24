@@ -5,6 +5,11 @@ import view.PGRFWindow;
 
 import javax.swing.*;
 
+/**
+ * Main class
+ * @author Milan Košťák
+ * @version 1.0
+ */
 public class AppStart {
 
     public static void main(String[] args) {

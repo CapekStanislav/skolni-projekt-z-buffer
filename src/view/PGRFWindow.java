@@ -10,9 +10,9 @@ public class PGRFWindow extends JFrame {
     public PGRFWindow() {
         // bez tohoto nastavení se okno zavře, ale aplikace stále běží na pozadí
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setTitle("KPGR 1,2 - cvičení"); // titulek okna
+        setTitle("KPGR 2 - Z-Buffer - Stanislav Čapek"); // titulek okna
 
-        raster = new Raster();
+        raster = new Raster(800, 600);
         raster.setFocusable(true);
         raster.grabFocus(); // důležité pro pozdější ovládání z klávesnice
 
