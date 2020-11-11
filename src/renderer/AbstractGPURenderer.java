@@ -1,28 +1,25 @@
 package renderer;
 
 import model.Vertex;
-import transforms.Mat4;
-import transforms.Mat4Identity;
-import transforms.Point3D;
-import transforms.Vec3D;
+import transforms.*;
 import view.Raster;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
 /**
- *
  * @author Stanislav Čapek
  * @version 1.0
  */
 public abstract class AbstractGPURenderer implements GPURenderer {
 
     protected final DepthBuffer<Double> zb;
-    private final int width;
-    private final int height;
-    private Raster raster;
+    protected final int width;
+    protected final int height;
+    protected Raster raster;
     protected Mat4 model, view, projection;
 
     public AbstractGPURenderer(Raster raster) {
@@ -218,20 +215,39 @@ public abstract class AbstractGPURenderer implements GPURenderer {
         }
     }
 
+    // testing
+    public static void main(String[] args) {
+        testInterpolate();
+    }
+
+    private static void testInterpolate() {
+        final SurfaceGPURenderer renderer = new SurfaceGPURenderer(new Raster());
+        final Vertex a = new Vertex(new Point3D(), new Col(Color.black.getRGB()), new Vec2D());
+        final Vertex b = new Vertex(new Point3D(10, 10, 0), new Col(Color.white.getRGB()), new Vec2D(300, 500));
+        System.out.println("AbstractGPURenderer.testInterpolate");
+        System.out.println("a = " + a);
+        System.out.println("b = " + b);
+
+        // interpolace podle x
+        final double t = renderer.getParameterT(5, a.getX(), b.getX());
+        System.out.println("t = " + t);
+        final Vertex resultVertex = renderer.interpolate(a, b, t);
+        System.out.println("resultVertex = " + resultVertex);
+        System.out.println("resultVertex.getU() = " + resultVertex.getU());
+        System.out.println("resultVertex.getV() = " + resultVertex.getV());
+
+
+    }
+
+    protected double getParameterT(double ux, double u1, double u2) {
+        return (ux - u1) / (u2 - u1);
+    }
+
     protected void prepareTriangle(Vertex v1, Vertex v2, Vertex v3) {
-        // transformace vrcholu
-        Vertex a = new Vertex(
-                v1.getPoint().mul(model).mul(view).mul(projection),
-                v1.getColor()
-        );
-        Vertex b = new Vertex(
-                v2.getPoint().mul(model).mul(view).mul(projection),
-                v2.getColor()
-        );
-        Vertex c = new Vertex(
-                v3.getPoint().mul(model).mul(view).mul(projection),
-                v3.getColor()
-        );
+
+        Vertex a = v1.withPoint(v1.getPoint().mul(model).mul(view).mul(projection));
+        Vertex b = v2.withPoint(v2.getPoint().mul(model).mul(view).mul(projection));
+        Vertex c = v3.withPoint(v3.getPoint().mul(model).mul(view).mul(projection));
 
 //        ořezání celého trojúhehlníku do objemu
         // ořezání pro hranu X
@@ -295,66 +311,6 @@ public abstract class AbstractGPURenderer implements GPURenderer {
 
     }
 
-    protected Vertex interpolate(Vertex a, Vertex b, double t) {
-        return a.mul(1 - t).add(b.mul(t));
-    }
-
-    protected double getParameterT(double ux, double u1, double u2) {
-        return (ux - u1) / (u2 - u1);
-    }
-
-    protected void drawTriangle(Vertex a, Vertex b, Vertex c) {
-
-        final Optional<Vertex> dA = a.demohog();
-        final Optional<Vertex> dB = b.demohog();
-        final Optional<Vertex> dC = c.demohog();
-
-        if (!dA.isPresent() || !dB.isPresent() || !dC.isPresent()) {
-            return;
-        }
-
-        // po demohogizaci
-        final Vertex v1 = dA.get();
-        final Vertex v2 = dB.get();
-        final Vertex v3 = dC.get();
-
-        final Vec3D vec3D1 = transformToWindow(v1.getPoint());
-        final Vec3D vec3D2 = transformToWindow(v2.getPoint());
-        final Vec3D vec3D3 = transformToWindow(v3.getPoint());
-
-
-        Vertex aa = new Vertex(new Point3D(vec3D1), v1.getColor());
-        Vertex bb = new Vertex(new Point3D(vec3D2), v2.getColor());
-        Vertex cc = new Vertex(new Point3D(vec3D3), v3.getColor());
-
-        final List<Vertex> vertices = new ArrayList<>(List.of(aa, bb, cc));
-        vertices.sort(Comparator.comparing(Vertex::getY));
-        aa = vertices.get(0);
-        bb = vertices.get(1);
-        cc = vertices.get(2);
-
-        for (int y = Math.max((int) aa.getY() + 1, 0); y <= Math.min(bb.getY(), height - 1); y++) {
-            final double t = getParameterT(y, aa.getY(), bb.getY());
-            final Vertex ab = interpolate(aa, bb, t);
-
-            final double t2 = getParameterT(y, aa.getY(), cc.getY());
-            final Vertex ac = interpolate(aa, cc, t2);
-            fillLine(ab, ac);
-
-        }
-
-        for (int y = Math.max((int) bb.getY() + 1, 0); y <= Math.min((int) cc.getY(), height - 1); y++) {
-            final double t = getParameterT(y, bb.getY(), cc.getY());
-            final Vertex bc = interpolate(bb, cc, t);
-
-            final double t2 = getParameterT(y, aa.getY(), cc.getY());
-            final Vertex ac = interpolate(aa, cc, t2);
-
-            fillLine(bc, ac);
-        }
-
-    }
-
     protected void fillLine(Vertex a, Vertex b) {
         if (a.getX() > b.getX()) {
             Vertex tmp = a;
@@ -386,9 +342,66 @@ public abstract class AbstractGPURenderer implements GPURenderer {
         }
     }
 
+    protected Vertex interpolate(Vertex a, Vertex b, double t) {
+        double w = ((1 - t) * a.getOne()) + (t * b.getOne());
+
+        return a.mul(1 - t).add(b.mul(t));
+    }
+
+    protected void drawTriangle(Vertex a, Vertex b, Vertex c) {
+
+        final Optional<Vertex> dA = a.demohog();
+        final Optional<Vertex> dB = b.demohog();
+        final Optional<Vertex> dC = c.demohog();
+
+        if (!dA.isPresent() || !dB.isPresent() || !dC.isPresent()) {
+            return;
+        }
+
+        // po demohogizaci
+        final Vertex v1 = dA.get();
+        final Vertex v2 = dB.get();
+        final Vertex v3 = dC.get();
+
+        final Vec3D vec3D1 = transformToWindow(v1.getPoint());
+        final Vec3D vec3D2 = transformToWindow(v2.getPoint());
+        final Vec3D vec3D3 = transformToWindow(v3.getPoint());
+
+        Vertex aa = v1.withPoint(new Point3D(vec3D1));
+        Vertex bb = v2.withPoint(new Point3D(vec3D2));
+        Vertex cc = v3.withPoint(new Point3D(vec3D3));
+
+        final List<Vertex> vertices = new ArrayList<>(List.of(aa, bb, cc));
+        vertices.sort(Comparator.comparing(Vertex::getY));
+        aa = vertices.get(0);
+        bb = vertices.get(1);
+        cc = vertices.get(2);
+
+        for (int y = Math.max((int) aa.getY() + 1, 0); y <= Math.min(bb.getY(), height - 1); y++) {
+            final double t = getParameterT(y, aa.getY(), bb.getY());
+            final Vertex ab = interpolate(aa, bb, t);
+
+            final double t2 = getParameterT(y, aa.getY(), cc.getY());
+            final Vertex ac = interpolate(aa, cc, t2);
+            fillLine(ab, ac);
+
+        }
+
+        for (int y = Math.max((int) bb.getY() + 1, 0); y <= Math.min((int) cc.getY(), height - 1); y++) {
+            final double t = getParameterT(y, bb.getY(), cc.getY());
+            final Vertex bc = interpolate(bb, cc, t);
+
+            final double t2 = getParameterT(y, aa.getY(), cc.getY());
+            final Vertex ac = interpolate(aa, cc, t2);
+
+            fillLine(bc, ac);
+        }
+
+    }
+
     protected Vec3D transformToWindow(Point3D point3D) {
         return new Vec3D(point3D)
-                .mul(new Vec3D(1, -1, 1)) // Y jde nahoru a my ho chceme dolů
+                .mul(new Vec3D(1, -1, 1)) // Y jde nahoru a  my ho chceme dolů
                 .add(new Vec3D(1, 1, 0)) // (0,0) je uprostřed, chceme v rohu
                 // máme <0;2> -> vynásobíme polovinou velikosti okna
                 .mul(new Vec3D(width / 2f, height / 2f, 1));

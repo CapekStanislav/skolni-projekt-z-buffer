@@ -264,6 +264,13 @@ public class Controller3D {
         renderables.clear();
         final Transformer t = new Transformer();
 
+        //test textury
+//        final SquareTextured squareTextured = new SquareTextured("textures/cube-test-tex.jpg");
+        final SquareTextured squareTextured = new SquareTextured("textures/rex.png");
+        t.rotate(squareTextured,Math.toRadians(-90),0,0);
+        t.move(squareTextured,0,-5,0);
+        renderables.add(squareTextured);
+
         final Cube cube = new Cube();
         cube.getTransformableState().setCenter(new Point3D(0, 0, 1));
         t.move(cube, -5, 5, 0);

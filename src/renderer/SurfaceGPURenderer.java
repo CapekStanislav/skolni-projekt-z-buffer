@@ -1,8 +1,6 @@
 package renderer;
 
-import model.Part;
-import model.Renderable;
-import model.Vertex;
+import model.*;
 import transforms.Mat4;
 import view.Raster;
 
@@ -15,6 +13,7 @@ import java.util.List;
  * @version 1.0
  */
 public class SurfaceGPURenderer extends AbstractGPURenderer {
+    Texture2D texture = null;
 
     public SurfaceGPURenderer(Raster raster) {
         super(raster);
@@ -23,6 +22,7 @@ public class SurfaceGPURenderer extends AbstractGPURenderer {
     @Override
     public void draw(Renderable... renderables) {
         for (Renderable renderable : renderables) {
+            texture = renderable instanceof TextureRenderable ? ((TextureRenderable) renderable).getTexture() : null;
             draw(renderable.getParts(), renderable.getVertexBuffer(), renderable.getIndexBuffer());
         }
     }
@@ -128,4 +128,47 @@ public class SurfaceGPURenderer extends AbstractGPURenderer {
         this.projection = projection;
     }
 
+    @Override
+    protected void fillLine(Vertex a, Vertex b) {
+        if (a.getX() > b.getX()) {
+            Vertex tmp = a;
+            a = b;
+            b = tmp;
+        }
+
+        for (int x = Math.max((int) a.getX() + 1, 0); x <= Math.min((int) b.getX(), width - 1); x++) {
+            double tz = getParameterT(x, a.getX(), b.getX());
+            Vertex ab = interpolate(a, b, tz);
+
+            drawPixel(ab);
+        }
+    }
+
+    @Override
+    protected void drawPixel(Vertex ver) {
+        final int x = (int) Math.round(ver.getX());
+        final int y = (int) Math.round(ver.getY());
+        final double z = ver.getZ();
+
+        // z-test
+
+        try {
+            if (zb.get(x, y) > z) {
+                zb.set(x, y, z);
+
+                int rgb = ver.getColor().mul(1/ver.getOne()).getRGB()ł;
+                // kontrola jestli má objekt texturu
+                if (texture != null) {
+                    final int u = ((int) Math.round(ver.getU()*(1/ver.getOne())));
+                    final int v = ((int) Math.round(ver.getV()*(1/ver.getOne())));
+
+                    rgb = texture.getColor(u, v).getRGB();
+                }
+                raster.drawPixel(x, y, rgb);
+            }
+        } catch (Exception ignore) {
+            // při zaokrouhlení dochází k chybě, zanedbatelné
+        }
+    }
 }
+

@@ -30,7 +30,7 @@ public class Transformer {
         final List<Vertex> vertexList = vb.stream()
                 .map(vertex -> {
                     final Point3D point = vertex.getPoint().mul(tran);
-                    return new Vertex(point, vertex.getColor());
+                    return new Vertex(point, vertex.getColor(),vertex.getTexCoord());
                 })
                 .collect(Collectors.toList());
         vb.clear();
@@ -52,7 +52,7 @@ public class Transformer {
         Mat4RotXYZ rot = new Mat4RotXYZ(alpha, beta, gamma);
         final List<Vertex> vertexList = verticies.stream()
                 .map(vertex ->
-                        new Vertex(vertex.getPoint().mul(rot), vertex.getColor())
+                        new Vertex(vertex.getPoint().mul(rot), vertex.getColor(),vertex.getTexCoord())
                 )
                 .collect(Collectors.toList());
 
@@ -80,7 +80,7 @@ public class Transformer {
                 .mul(new Mat4Transl(center));
         final List<Vertex> verticies = transformable.getVertices();
         final List<Vertex> vertexList = verticies.stream()
-                .map(vertex -> new Vertex(vertex.getPoint().mul(rot), vertex.getColor()))
+                .map(vertex -> new Vertex(vertex.getPoint().mul(rot), vertex.getColor(),vertex.getTexCoord()))
                 .collect(Collectors.toList());
         verticies.clear();
         verticies.addAll(vertexList);
@@ -101,7 +101,7 @@ public class Transformer {
         Mat4Scale scale = new Mat4Scale(x, y, z);
         final List<Vertex> vertexList = verticies
                 .stream()
-                .map(vertex -> new Vertex(vertex.getPoint().mul(scale), vertex.getColor()))
+                .map(vertex -> new Vertex(vertex.getPoint().mul(scale), vertex.getColor(),vertex.getTexCoord()))
                 .collect(Collectors.toList());
         verticies.clear();
         verticies.addAll(vertexList);
@@ -126,7 +126,7 @@ public class Transformer {
                 .mul(scale)
                 .mul(new Mat4Transl(center));
         final List<Vertex> vertexList = verticies.stream()
-                .map(vertex -> new Vertex(vertex.getPoint().mul(tranAndScale), vertex.getColor()))
+                .map(vertex -> new Vertex(vertex.getPoint().mul(tranAndScale), vertex.getColor(),vertex.getTexCoord()))
                 .collect(Collectors.toList());
         verticies.clear();
         verticies.addAll(vertexList);
