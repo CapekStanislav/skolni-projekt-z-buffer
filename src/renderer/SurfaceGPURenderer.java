@@ -156,7 +156,7 @@ public class SurfaceGPURenderer extends AbstractGPURenderer {
             if (zb.get(x, y) > z) {
                 zb.set(x, y, z);
 
-                int rgb = ver.getColor().mul(1/ver.getOne()).getRGB()ł;
+                int rgb = ver.getColor().mul(1/ver.getOne()).getRGB();
                 // kontrola jestli má objekt texturu
                 if (texture != null) {
                     final int u = ((int) Math.round(ver.getU()*(1/ver.getOne())));
